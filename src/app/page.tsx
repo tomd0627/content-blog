@@ -8,13 +8,14 @@ export const revalidate = 60;
 export default async function HomePage() {
   const [featured, recent] = await Promise.all([
     getFeaturedPost(),
-    getRecentPosts(6),
+    getRecentPosts(7),
   ]);
 
-  // Exclude the featured post from the recent grid
-  const grid = featured
+  // Exclude the featured post from the recent grid, always cap at 6 (2 rows × 3 cols)
+  const grid = (featured
     ? recent.filter((p) => p.slug !== featured.slug)
-    : recent;
+    : recent
+  ).slice(0, 6);
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 space-y-14">

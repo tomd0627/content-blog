@@ -16,7 +16,7 @@ export function FeaturedPost({ post }: FeaturedPostProps) {
       aria-label={`Featured: ${post.title}`}
     >
       {/* Background image */}
-      <div className="relative h-72 sm:h-96 w-full">
+      <div className="relative h-80 sm:h-96 w-full">
         <Image
           src={post.coverImage.src || "/og-default.svg"}
           alt={post.coverImage.alt}
@@ -40,7 +40,7 @@ export function FeaturedPost({ post }: FeaturedPostProps) {
       <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
         {/* Featured badge */}
         <span
-          className="inline-flex self-start mb-3 px-2.5 py-1 rounded-full text-xs font-medium uppercase tracking-wide"
+          className="inline-flex self-start mb-4 px-2.5 py-1 rounded-full text-xs font-medium uppercase tracking-wide"
           style={{
             backgroundColor: "var(--color-accent)",
             color: "white",
@@ -50,12 +50,12 @@ export function FeaturedPost({ post }: FeaturedPostProps) {
           Featured
         </span>
 
-        <div className="mb-3">
+        <div className="mb-4">
           <PostMeta post={post} staticTags />
         </div>
 
         <h2
-          className="text-2xl sm:text-3xl font-bold leading-tight mb-3"
+          className="text-2xl sm:text-3xl font-bold leading-tight mb-4"
           style={{ color: "white" }}
         >
           <Link

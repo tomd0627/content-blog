@@ -11,7 +11,7 @@ interface PostCardProps {
 export function PostCard({ post, priority = false }: PostCardProps) {
   return (
     <article
-      className="flex flex-col rounded-xl overflow-hidden border transition-shadow hover:shadow-md"
+      className="flex flex-col h-full rounded-xl overflow-hidden border transition-shadow hover:shadow-md"
       style={{
         backgroundColor: "var(--color-surface)",
         borderColor: "var(--color-border)",
