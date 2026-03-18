@@ -1,0 +1,148 @@
+---
+title: "The Case for CSS Custom Properties in 2026"
+slug: "css-custom-properties-2026"
+excerpt: "CSS custom properties are more than variables — they're a design system primitive. Here's how I use them to build themes, component variants, and adaptive layouts without JavaScript."
+publishedAt: "2025-12-20T09:00:00Z"
+tags: ["css", "design-systems", "frontend"]
+featured: false
+coverImage:
+  src: "/images/posts/css-custom-properties-2026.svg"
+  alt: "CSS code showing custom property declarations and usage"
+---
+
+CSS custom properties (`--like-this`) have been baseline since 2016. Yet many codebases still use Sass variables or JavaScript constants for what CSS can handle natively — with real runtime behavior that preprocessors can't match.
+
+Here's why I reach for custom properties first, and the patterns I use most.
+
+## What Makes Them Different From Sass Variables
+
+Sass variables compile away. By the time a browser sees your CSS, `$primary` is already `#c4622d`. You can't change it at runtime.
+
+CSS custom properties are live. They exist in the browser. You can change them with JavaScript, update them in media queries, override them in nested scopes, or read them from `getComputedStyle()`. This unlocks patterns preprocessors simply cannot do.
+
+```css
+/* Sass — compile-time constant */
+$space-md: 1rem;
+.card { padding: $space-md; }  /* baked into the output */
+
+/* CSS custom property — runtime value */
+:root { --space-md: 1rem; }
+.card { padding: var(--space-md); }  /* resolved by the browser */
+
+/* Now I can adapt it without touching .card */
+@media (min-width: 768px) {
+  :root { --space-md: 1.5rem; }
+}
+```
+
+## Theming Without JavaScript
+
+Dark mode toggle without a single line of JS for the theme itself:
+
+```css
+:root {
+  --color-bg: #faf7f0;
+  --color-text: #2d2d2a;
+  --color-accent: #c4622d;
+}
+
+[data-theme="dark"] {
+  --color-bg: #161a14;
+  --color-text: #e8e4da;
+  --color-accent: #e07a48;
+}
+```
+
+```tsx
+// One JS line to toggle
+document.documentElement.setAttribute("data-theme", "dark");
+```
+
+Everything inherits the updated values instantly. No class-swapping on every component, no re-renders, no prop drilling. The cascade does the work.
+
+## Component Variants via Local Overrides
+
+Custom properties scope to the element they're set on. This makes component variants clean:
+
+```css
+.btn {
+  --btn-bg: var(--color-surface);
+  --btn-text: var(--color-text);
+  --btn-border: var(--color-border);
+
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: 1px solid var(--btn-border);
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+}
+
+.btn-primary {
+  --btn-bg: var(--color-accent);
+  --btn-text: white;
+  --btn-border: var(--color-accent);
+}
+
+.btn-ghost {
+  --btn-bg: transparent;
+  --btn-border: transparent;
+}
+```
+
+Adding a new variant is one line that overrides the component's own custom properties. The base `.btn` styles never need to change.
+
+## Adaptive Typography with `clamp()`
+
+`clamp(min, preferred, max)` creates fluid type that scales with the viewport:
+
+```css
+:root {
+  --text-display: clamp(2.5rem, 5vw, 4rem);
+  --text-h1: clamp(2rem, 4vw, 3rem);
+  --text-h2: clamp(1.5rem, 3vw, 1.875rem);
+  --text-body: clamp(1rem, 1.5vw, 1.125rem);
+}
+
+h1 { font-size: var(--text-h1); }
+```
+
+No breakpoints needed. The type scales smoothly across any viewport width. Pair this with a Tailwind theme extension and you have consistent fluid type across every component.
+
+## Reading Custom Properties From JavaScript
+
+```javascript
+const root = document.documentElement;
+const accent = getComputedStyle(root).getPropertyValue("--color-accent").trim();
+// "#c4622d" in light mode, "#e07a48" in dark mode
+
+// Set a custom property from JS (useful for interactive values)
+root.style.setProperty("--header-height", `${headerEl.offsetHeight}px`);
+```
+
+The `--header-height` technique is genuinely useful. Set it once on mount, and any element below in the cascade can use `calc(100dvh - var(--header-height))` for full-viewport sections that account for a sticky header.
+
+## Fallback Values
+
+The second argument to `var()` is a fallback:
+
+```css
+.card {
+  /* If --card-radius isn't defined, fall back to 8px */
+  border-radius: var(--card-radius, 8px);
+}
+```
+
+This is how you build flexible components. The component defines sensible defaults; consumers override only what they need.
+
+## What I Use Them For Today
+
+On every project:
+
+1. **All design tokens** — colors, spacing scale, border radii, shadows, type sizes
+2. **Component-level overrides** — the variant pattern above
+3. **Animation values** — `--duration`, `--easing` so I can kill all motion at `:root` for reduced-motion
+4. **Dynamic values** — scrollY percentage, element heights, computed positions
+
+What I don't use them for: anything that benefits from type safety (TypeScript Tailwind config) or static analysis. Custom properties are strings; they can't be checked at build time. For that, Tailwind's design token integration is the right tool — and you can source Tailwind's values from CSS custom properties to get both.
+
+The platform has caught up. Use it.

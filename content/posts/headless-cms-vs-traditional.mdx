@@ -1,0 +1,74 @@
+---
+title: "Headless CMS vs Traditional: An Honest Comparison"
+slug: "headless-cms-vs-traditional"
+excerpt: "I've built on both Drupal and Sanity at enterprise scale. Here's an honest look at the tradeoffs — when headless wins, when it doesn't, and what the architecture of this very site taught me."
+publishedAt: "2025-11-18T09:00:00Z"
+tags: ["cms", "architecture", "frontend"]
+featured: false
+coverImage:
+  src: "/images/posts/headless-cms-vs-traditional.svg"
+  alt: "Architecture diagram showing headless CMS connected to multiple front-end clients"
+---
+
+"Go headless" is the default recommendation now. But like most defaults, it's worth questioning. I've built on traditional CMS platforms (WordPress, Drupal) and headless ones (Sanity, Contentful) at scale, and the honest answer is: it depends — and the dependencies are worth understanding.
+
+## What "Headless" Actually Means
+
+A traditional CMS couples content management with rendering. WordPress generates HTML on the server; Drupal renders Twig templates. The CMS is both the database and the front end.
+
+A headless CMS separates these concerns. Sanity, Contentful, and Prismic are databases with content editing UIs — they store and structure content, then expose it via API. Your front end (Next.js, Astro, Eleventy, whatever) fetches from that API and renders its own HTML.
+
+```
+Traditional:
+Browser → WordPress/Drupal → HTML
+
+Headless:
+Browser → Next.js → Sanity API → Structured content
+```
+
+The front end controls the rendering entirely. This is the crux of the tradeoff.
+
+## Where Headless Wins
+
+**Multi-channel publishing.** If the same content appears on a website, a mobile app, and a digital signage system, you want one source of truth with an API. A traditional CMS assumes web output; headless assumes nothing.
+
+**Front-end developer experience.** Building with React, TypeScript, and Next.js on top of a headless API is genuinely enjoyable. You're writing modern JavaScript, not wrestling with PHP template inheritance or plugin ecosystem rot.
+
+**Performance ceiling.** A Next.js site on Netlify's edge CDN with static generation and ISR has a much higher performance ceiling than a server-rendered WordPress install. The architecture enables Lighthouse 100 in ways that traditional CMS makes difficult.
+
+**Deployment flexibility.** You can deploy to Vercel, Netlify, Cloudflare Pages, or a simple static host. No PHP runtime required. No database to manage.
+
+## Where Traditional CMS Still Wins
+
+**Editorial experience.** WordPress's block editor (Gutenberg) and Drupal's Layout Builder offer content authors a WYSIWYG experience with real-time preview of exactly what will publish. Sanity's Studio is excellent for developers but has a steeper learning curve for non-technical editors.
+
+**Ecosystem depth.** WordPress has 60,000+ plugins. Need an e-commerce integration, a complex forms workflow, multi-site management, or localization? There's probably a maintained plugin. Headless requires custom integration work for everything.
+
+**Total cost for small projects.** For a 5-page marketing site maintained by a content team, the operational overhead of a Next.js app + Sanity Studio + Netlify deployment might outweigh the benefits. A well-configured WordPress install with a performance-optimized theme can get to Lighthouse 90+ and takes an afternoon to set up.
+
+**Client handoff.** If you're building for a client who will maintain their own content, WordPress is the safer handoff. The editing experience is familiar, the plugin ecosystem handles common needs, and there are WordPress developers everywhere.
+
+## This Site's Architecture
+
+This blog uses Sanity for content management, with a fallback to local MDX files. Here's why:
+
+**Sanity was the right call for a portfolio piece.** Real API integration demonstrates a relevant skill. The content model I built — posts, tags, rich text with custom blocks — is a realistic representation of production headless CMS work.
+
+**MDX fallback makes the demo work.** Not everyone reviewing this will have Sanity credentials. The site ships with six seed posts as MDX files. The content API checks for a `SANITY_PROJECT_ID` environment variable and routes accordingly. Same UI, same components, different data source.
+
+**Static generation + ISR.** Post pages are statically generated at build time via `generateStaticParams`. The listing page uses ISR with a 60-second revalidation. This means the first visitor after a content update waits for a single regeneration; everyone after gets the cached static page.
+
+## The Architecture Decision Framework
+
+| Factor | Traditional CMS | Headless CMS |
+|--------|----------------|--------------|
+| Content editors | Non-technical | Comfortable with tools |
+| Channels | Web only | Multiple |
+| Performance target | Lighthouse 70+ | Lighthouse 95+ |
+| Team | Full-stack / PHP | JavaScript / React |
+| Timeline | Fast | Longer build |
+| Maintenance budget | High (plugins) | Lower (custom) |
+
+Neither is universally better. The best answer is the one that maps correctly to your constraints.
+
+What I can say with confidence: for a modern front-end developer's portfolio piece, headless + Next.js + a generous free-tier CMS is the right stack. It demonstrates the right skills, delivers excellent performance, and is genuinely pleasant to build.

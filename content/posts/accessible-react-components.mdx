@@ -1,0 +1,179 @@
+---
+title: "Building Accessible React Components: A Practical Guide"
+slug: "accessible-react-components"
+excerpt: "Accessibility is not a feature — it's a foundation. Here's how to build React components that work for everyone from day one, with real code patterns you can use today."
+publishedAt: "2026-02-10T09:00:00Z"
+tags: ["accessibility", "react", "frontend"]
+featured: true
+coverImage:
+  src: "/images/posts/accessible-react-components.svg"
+  alt: "Code editor showing a React component with ARIA attributes"
+---
+
+Most developers say they care about accessibility. Few build it in from the start. After working with Storybook component libraries at scale, I've learned that the gap between intention and practice usually comes down to habits — not knowledge.
+
+This guide is about practical patterns, not theory. Let's write accessible React components together.
+
+## The Component You Almost Got Right: Button
+
+Here's a button that looks fine on the surface:
+
+```tsx
+// ❌ Not quite right
+function IconButton({ icon, onClick }) {
+  return (
+    <button onClick={onClick} className="icon-btn">
+      {icon}
+    </button>
+  );
+}
+```
+
+If that icon is an SVG with no text inside, a screen reader user hears "button" with no context. The fix is one attribute:
+
+```tsx
+// ✅ Accessible
+function IconButton({ icon, label, onClick }: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label} className="icon-btn">
+      <span aria-hidden="true">{icon}</span>
+    </button>
+  );
+}
+```
+
+Two changes: `aria-label` names the button, `aria-hidden="true"` on the icon tells screen readers to skip the SVG markup.
+
+## Focus Management in Modals
+
+Modals are where accessibility commonly breaks. When a modal opens, focus must move inside it. When it closes, focus must return to the trigger.
+
+```tsx
+import { useEffect, useRef } from "react";
+
+function Modal({ isOpen, onClose, title, children }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Save the element that opened the modal
+      triggerRef.current = document.activeElement as HTMLButtonElement;
+      // Move focus inside
+      modalRef.current?.focus();
+    } else {
+      // Return focus on close
+      triggerRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      ref={modalRef}
+      tabIndex={-1}
+      className="modal"
+    >
+      <h2 id="modal-title">{title}</h2>
+      {children}
+      <button type="button" onClick={onClose}>Close</button>
+    </div>
+  );
+}
+```
+
+The `tabIndex={-1}` on the `div` lets us call `.focus()` on it programmatically without adding it to the natural tab order.
+
+## Keyboard Navigation in Custom Selects
+
+Browser `<select>` elements are accessible by default. Custom dropdowns are not. If you must build one, you need full keyboard support:
+
+- `Enter` / `Space` to open
+- `ArrowUp` / `ArrowDown` to navigate options
+- `Escape` to close
+- `Tab` to move focus out
+
+```tsx
+function onKeyDown(e: React.KeyboardEvent) {
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, options.length - 1));
+      break;
+    case "ArrowUp":
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+      break;
+    case "Escape":
+      setIsOpen(false);
+      triggerRef.current?.focus();
+      break;
+    case "Enter":
+    case " ":
+      e.preventDefault();
+      selectOption(options[activeIndex]);
+      break;
+  }
+}
+```
+
+Pair this with `role="listbox"` on the container and `role="option"` with `aria-selected` on each item.
+
+## The Hidden Benefit of Semantic HTML
+
+Before reaching for ARIA, ask: does the right HTML element exist? Usually it does. `<button>` handles clicks and keyboard. `<a>` handles navigation. `<nav>` gives the page structure. `<main>` marks the primary content.
+
+> "The first rule of ARIA is: don't use ARIA." — W3C WAI-ARIA spec
+
+ARIA is a powerful tool for filling gaps the native HTML platform leaves, but it can't rescue broken markup. A `<div role="button">` is harder to get right than `<button>` — it requires you to manually add `tabIndex`, keyboard handlers, and all the states the browser gives you for free.
+
+## Testing What You Build
+
+Three tools I use on every component:
+
+1. **Keyboard only** — unplug the mouse and tab through everything. Can you reach and operate all interactive elements?
+2. **axe DevTools** — browser extension that catches ~57% of accessibility issues automatically.
+3. **Screen reader** — NVDA on Windows (free), VoiceOver on Mac (built-in). Actually listen to your component.
+
+The combination catches the majority of issues before they ship.
+
+## A Pattern to Copy
+
+Here's a complete accessible disclosure (accordion) component you can adapt:
+
+```tsx
+function Disclosure({ summary, children }: { summary: string; children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const id = useId();
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={id}
+        onClick={() => setIsOpen((v) => !v)}
+        className="disclosure-trigger"
+      >
+        {summary}
+        <span aria-hidden="true">{isOpen ? "▲" : "▼"}</span>
+      </button>
+      <div id={id} hidden={!isOpen}>
+        {children}
+      </div>
+    </div>
+  );
+}
+```
+
+`aria-expanded` tells the screen reader the current state. `aria-controls` links the button to the panel it controls. The `hidden` attribute natively removes the content from accessibility tree and display when closed.
+
+These patterns become second nature with practice. Start with one component and make it right. Then the next. Accessibility is built in layers — small habits compounding into something solid.

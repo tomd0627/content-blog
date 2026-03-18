@@ -1,0 +1,151 @@
+---
+title: "Why TypeScript Changed How I Think About Code"
+slug: "typescript-changed-how-i-think"
+excerpt: "TypeScript isn't just about catching bugs — it's a design tool. Using it well has fundamentally shifted how I approach architecture, documentation, and collaboration on front-end projects."
+publishedAt: "2025-12-05T09:00:00Z"
+tags: ["typescript", "frontend", "dx"]
+featured: false
+coverImage:
+  src: "/images/posts/typescript-changed-how-i-think.svg"
+  alt: "TypeScript code with type definitions and IntelliSense hints visible"
+---
+
+I resisted TypeScript for longer than I'd like to admit. "It's just JavaScript with extra steps." That framing was wrong, and changing it unlocked the real value.
+
+TypeScript isn't a type checker bolted onto JavaScript. It's a design tool that forces you to think more clearly about the shape of your data — before you write a single implementation line.
+
+## Types as Documentation That Can't Lie
+
+The most underrated benefit: types are documentation that the compiler keeps honest.
+
+```typescript
+// Before TypeScript — I'd write a comment and hope
+// Returns a post summary object with title, slug, excerpt, and publishedAt
+async function getPost(slug) {
+  // ...
+}
+
+// After — the type IS the documentation
+async function getPost(slug: string): Promise<PostSummary | null> {
+  // ...
+}
+
+interface PostSummary {
+  title: string;
+  slug: string;
+  excerpt: string;
+  publishedAt: string;     // ISO date string
+  tags: Tag[];
+  readingTime: string;     // e.g. "4 min read"
+  featured: boolean;
+}
+```
+
+The comment version drifts. Someone adds `readingTime` to the return object but forgets to update the comment. The TypeScript version: if you add a field to `PostSummary` without updating every place it's used, the compiler tells you immediately.
+
+## Designing APIs Before Implementing Them
+
+I now write types first, implementation second. For a content API:
+
+```typescript
+// Define the contract first
+interface ContentAPI {
+  getFeaturedPost(): Promise<PostSummary | null>;
+  getPosts(options: GetPostsOptions): Promise<PaginatedPosts>;
+  getPostBySlug(slug: string): Promise<Post | null>;
+  getAllTags(): Promise<Tag[]>;
+}
+
+interface GetPostsOptions {
+  page?: number;
+  pageSize?: number;
+  tag?: string;
+}
+```
+
+Writing this first forces questions: What does `getPosts` return when there are no posts? (A `PaginatedPosts` with empty `posts` array — never `null`, never `undefined`.) What happens if a slug doesn't exist? (`null` — explicit and handled by callers.)
+
+The types become the specification. The implementation fills them in.
+
+## Discriminated Unions Over Boolean Flags
+
+This is the pattern that changed how I think about state:
+
+```typescript
+// ❌ Boolean flag hell — what are the valid combinations?
+interface State {
+  data: Post | null;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+}
+// Is { isLoading: true, isError: true } valid? Who knows.
+
+// ✅ Discriminated union — every state is explicit and exhaustive
+type AsyncState<T> =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; error: Error };
+```
+
+With the union, TypeScript narrows automatically:
+
+```typescript
+function render(state: AsyncState<Post>) {
+  if (state.status === "loading") return <Spinner />;
+  if (state.status === "error") return <ErrorMessage error={state.error} />;
+  if (state.status === "success") {
+    // TypeScript knows state.data: Post here
+    return <PostDetail post={state.data} />;
+  }
+  return null;
+}
+```
+
+No impossible states. No `!` non-null assertions. The type system proves correctness.
+
+## `noUncheckedIndexedAccess` Is Worth the Pain
+
+Most TypeScript configs leave this off. Turn it on:
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true
+  }
+}
+```
+
+Now `array[0]` has type `T | undefined` instead of `T`. This reflects reality — arrays can be empty. It forces you to handle the case:
+
+```typescript
+const first = posts[0]; // Type: PostSummary | undefined
+
+// ❌ Before — this crashes at runtime if posts is empty
+console.log(first.title);
+
+// ✅ After — handle it
+if (first) {
+  console.log(first.title);
+}
+// Or
+console.log(posts[0]?.title ?? "No posts yet");
+```
+
+I've caught real bugs with this. Empty arrays in production are more common than you'd expect.
+
+## The Collaboration Multiplier
+
+On any team project, TypeScript pays for itself in code review alone. Instead of comments like:
+
+> "What does this function return? Could it be null here?"
+
+The reviewer can read the types. The questions become:
+
+> "Should this be `string` or `string | null`? The calling code assumes it's always defined."
+
+That's a better question. The types surface assumptions that would otherwise be invisible.
+
+TypeScript didn't make me a better developer by catching bugs. It made me better by forcing me to articulate what I was building before I built it.

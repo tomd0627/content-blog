@@ -1,0 +1,141 @@
+---
+title: "GSAP ScrollTrigger: Lessons From Production"
+slug: "gsap-scroll-trigger-lessons"
+excerpt: "After shipping GSAP ScrollTrigger experiences in enterprise codebases, here are the performance pitfalls, debugging tricks, and architectural decisions I wish I'd known earlier."
+publishedAt: "2026-01-28T09:00:00Z"
+tags: ["gsap", "animation", "performance"]
+featured: false
+coverImage:
+  src: "/images/posts/gsap-scroll-trigger-lessons.svg"
+  alt: "Browser DevTools performance panel showing smooth 60fps animation"
+---
+
+GSAP's ScrollTrigger is genuinely remarkable engineering. When it works, it delivers the kind of scroll-driven experiences that make people screenshot your site. But it has footguns. I've hit most of them in production.
+
+Here's what I know now that I wish I'd known at the start.
+
+## Always Kill Your Triggers on Cleanup
+
+This is the most common source of bugs in React. Every ScrollTrigger you create must be killed when its component unmounts:
+
+```tsx
+useEffect(() => {
+  const ctx = gsap.context(() => {
+    ScrollTrigger.create({
+      trigger: containerRef.current,
+      start: "top 80%",
+      onEnter: () => gsap.to(el, { opacity: 1, y: 0, duration: 0.6 }),
+    });
+  }, containerRef);
+
+  return () => ctx.revert();
+}, []);
+```
+
+`gsap.context()` scopes all GSAP and ScrollTrigger instances to a React component. `.revert()` kills them all cleanly on unmount. Without this, you accumulate zombie triggers — especially painful in SPAs where components mount and unmount frequently.
+
+## Refresh After Dynamic Content Loads
+
+ScrollTrigger calculates positions once on creation, based on the DOM at that moment. If your content shifts — images loading, accordions expanding, async data arriving — those calculations are stale.
+
+```tsx
+// After images load, accordions animate in, data arrives, etc.
+ScrollTrigger.refresh();
+```
+
+A more robust pattern is listening for layout-affecting events:
+
+```tsx
+useEffect(() => {
+  const images = containerRef.current?.querySelectorAll("img");
+  if (!images?.length) return;
+
+  let loaded = 0;
+  const onLoad = () => {
+    loaded++;
+    if (loaded === images.length) ScrollTrigger.refresh();
+  };
+
+  images.forEach((img) => {
+    if (img.complete) loaded++;
+    else img.addEventListener("load", onLoad);
+  });
+}, []);
+```
+
+## The Pinning Performance Trap
+
+Pinned sections (`pin: true`) are expensive. GSAP adds `position: fixed` and translates the page content to simulate scrolling. On mobile, especially older devices, this causes jank.
+
+What to do:
+- Keep pinned sections short in duration
+- Avoid complex child animations inside a pin
+- Test on actual mobile hardware, not just emulation
+- Use `pinSpacing: false` when you control the surrounding layout
+
+If you're pinning to reveal content sequentially, CSS `position: sticky` is often smoother and good enough for most use cases.
+
+## `markers: true` Is Your Best Friend
+
+This is obvious but worth stating: always develop with markers on.
+
+```javascript
+ScrollTrigger.create({
+  trigger: ".section",
+  start: "top center",
+  end: "bottom center",
+  markers: true, // shows start/end lines in the browser
+  onEnter: () => { /* ... */ },
+});
+```
+
+Seeing exactly where `start` and `end` fall removes 80% of the confusion. Turn them off before deploying — I have a `const isDev = process.env.NODE_ENV === 'development'` check for this.
+
+## Respect `prefers-reduced-motion`
+
+This is not optional. Users who enable reduced motion have vestibular disorders, epilepsy, or other conditions that make large animations harmful.
+
+```tsx
+const prefersReducedMotion = window.matchMedia(
+  "(prefers-reduced-motion: reduce)"
+).matches;
+
+if (!prefersReducedMotion) {
+  gsap.from(".hero-title", {
+    y: 60,
+    opacity: 0,
+    duration: 0.8,
+    ease: "power2.out",
+  });
+}
+```
+
+For ScrollTrigger specifically, you might still want the end state (opacity: 1, y: 0) to render — just without the animation. `gsap.set()` applies the final state immediately without tweening.
+
+## Debugging the ScrollTrigger Timeline
+
+When triggers fire at the wrong time, the issue is almost always one of:
+
+1. **Wrong `start` string** — remember it's `"scrollerPosition triggerPosition"`. `"top 80%"` means "when the top of the trigger hits 80% down the viewport."
+2. **Stale position after layout change** — call `ScrollTrigger.refresh()`
+3. **A parent with `overflow: hidden`** — this changes the scroller. Set `scroller` explicitly or remove the overflow.
+4. **Nested scroll containers** — you need `scroller` option pointing to the actual scrolling element.
+
+```javascript
+// If the page scroller is a specific element, not the window:
+ScrollTrigger.create({
+  trigger: ".panel",
+  scroller: "#scroll-container",
+  start: "top top",
+});
+```
+
+## Performance Budget
+
+GSAP is highly optimized but it's still JavaScript running on the main thread. Some rules of thumb:
+- Animate `transform` and `opacity` — these are GPU-composited and never trigger reflow
+- Never animate `width`, `height`, `top`, `left`, `margin`, `padding` — they trigger layout
+- Batch your `ScrollTrigger.create()` calls — creating 50+ triggers individually has overhead
+- Use `gsap.quickTo()` for mouse-follow effects instead of tweens in `mousemove` listeners
+
+These constraints are what GSAP's performance reputation is built on. Work with them, not around them.

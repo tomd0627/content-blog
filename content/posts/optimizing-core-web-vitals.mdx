@@ -1,0 +1,154 @@
+---
+title: "Optimizing Core Web Vitals in Next.js"
+slug: "optimizing-core-web-vitals"
+excerpt: "Lighthouse 100 is achievable, but it requires understanding what each metric actually measures. Here's a systematic approach to LCP, CLS, and INP in a Next.js App Router project."
+publishedAt: "2026-01-15T09:00:00Z"
+tags: ["performance", "nextjs", "core-web-vitals"]
+featured: false
+coverImage:
+  src: "/images/posts/optimizing-core-web-vitals.svg"
+  alt: "Lighthouse score panel showing 100 across all categories"
+---
+
+Lighthouse 100 is a legitimate target, not a vanity metric. The scores correlate with real user experience and, increasingly, search ranking. Getting there in Next.js is systematic work.
+
+Here's the mental model and the specific techniques.
+
+## LCP: Largest Contentful Paint
+
+LCP measures how long it takes for the largest visible element to render — usually a hero image or headline. Target: under 2.5 seconds.
+
+### The fastest LCP: No image at all
+
+If your hero is text, you win. Lora at `clamp(2.5rem, 5vw, 4rem)` renders in the first paint with no network request. Genuinely consider this before reaching for a hero image.
+
+### When you need the image
+
+```tsx
+// In your hero component:
+<Image
+  src="/images/hero.svg"
+  alt="Descriptive alt text"
+  width={1200}
+  height={630}
+  priority          // preloads the image, removes lazy loading
+  sizes="100vw"     // tells the browser this spans the full viewport
+  placeholder="blur"
+  blurDataURL={blurData}  // base64 LQIP prevents layout shift during load
+/>
+```
+
+Two things matter here: `priority` and `sizes`. The `priority` prop adds `<link rel="preload">` in the document head so the browser fetches it before it encounters the `<img>` tag in the HTML. The `sizes` attribute prevents the browser from fetching an oversized image.
+
+### Font LCP
+
+If a heading is your LCP element, font loading matters.
+
+```tsx
+// next/font self-hosts at build time — no external network request
+const lora = Lora({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,  // adds <link rel="preload"> for above-fold font
+});
+```
+
+With `next/font`, there is no FOUT (Flash of Unstyled Text) — fonts are available in the first paint.
+
+## CLS: Cumulative Layout Shift
+
+CLS measures how much the page jumps around as it loads. Target: under 0.1. Zero is achievable.
+
+### The #1 cause: unsized images
+
+Every `<Image>` must have explicit `width` and `height`, or a sized container with `fill`:
+
+```tsx
+// ✅ Explicit dimensions — browser reserves space before image loads
+<Image src={src} alt={alt} width={672} height={378} />
+
+// ✅ fill with explicit container — same result
+<div className="relative aspect-video">
+  <Image src={src} alt={alt} fill className="object-cover" />
+</div>
+
+// ❌ No dimensions — browser doesn't know how much space to reserve
+<Image src={src} alt={alt} />
+```
+
+### Font CLS with `size-adjust`
+
+Even with `display: swap`, there's a brief period where the fallback font renders. If it's a different size than the web font, content shifts when the web font arrives. Next.js handles this automatically with `adjustFontFallback` (enabled by default). If you're defining your own fallback:
+
+```css
+@font-face {
+  font-family: "Lora Fallback";
+  src: local("Georgia");
+  size-adjust: 103%;    /* adjust until visual size matches */
+  ascent-override: 95%;
+}
+```
+
+### Dynamic content above the fold
+
+Any element that changes size after initial render shifts content below it. Common culprits: cookie banners, notification bars, ads, async-loaded components. Always reserve their space with `min-height` before they mount.
+
+## INP: Interaction to Next Paint
+
+INP replaced FID in March 2024. It measures the worst interaction delay across the page's lifetime. Target: under 200ms.
+
+### Long tasks block the main thread
+
+Use Chrome DevTools Performance tab to record a trace. Look for tasks longer than 50ms on the main thread. Common offenders in Next.js:
+
+- **Hydration of large component trees** — minimize client components
+- **Third-party scripts** — load them with `next/script` and `strategy="lazyOnload"`
+- **Heavy synchronous event handlers** — defer work with `setTimeout(fn, 0)` or `startTransition`
+
+```tsx
+import { startTransition } from "react";
+
+function FilterButton({ value }: { value: string }) {
+  return (
+    <button
+      onClick={() => {
+        startTransition(() => {
+          // This state update is non-urgent — React can yield to user input
+          setFilter(value);
+        });
+      }}
+    >
+      {value}
+    </button>
+  );
+}
+```
+
+`startTransition` marks a state update as non-urgent so React can prioritize responding to new interactions.
+
+## The Audit Workflow
+
+My standard process before deploying:
+
+1. `next build && next start` — test the production build, not dev
+2. Chrome DevTools Lighthouse → Mobile → run audit (mobile is harder, scores it correctly)
+3. Fix highest-impact issues first (LCP > CLS > INP)
+4. Deploy to Netlify CDN — HTTP/2, edge caching, and proper headers change real-world scores
+5. Run PageSpeed Insights on the live URL — uses real-world data, not just lab metrics
+
+> The gap between localhost Lighthouse and PageSpeed Insights tells you how much your hosting and network matter.
+
+## Checklist for Lighthouse 100
+
+- `<Image priority>` on the LCP image only
+- `sizes` prop on every `<Image>`
+- Explicit dimensions or `fill` + sized container on every image
+- `next/font` for all custom fonts
+- No render-blocking `<script>` tags in `<head>`
+- Semantic HTML + proper heading hierarchy (a11y score)
+- Meta description on every page (SEO score)
+- No `console.error` in production (best practices score)
+- HTTPS with valid cert (provided free by Netlify)
+- Manifest or favicon present (PWA/best practices)
+
+The 100 score is real. It just requires being deliberate about each of these items.

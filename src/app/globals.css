@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --color-bg: #faf7f0;
+    --color-surface: #f2ede2;
+    --color-surface-raised: #ffffff;
+    --color-border: #ddd6c8;
+    --color-border-subtle: #ede8de;
+    --color-text: #2d2d2a;
+    --color-text-secondary: #5c5a54;
+    --color-text-muted: #8c897f;
+    --color-accent: #c4622d;
+    --color-accent-hover: #a84f22;
+    --color-accent-light: #f5e8de;
+    --color-sage: #87a878;
+    --color-sage-dark: #5f7a52;
+    --color-focus: #2d6a4f;
+  }
+
+  [data-theme="dark"] {
+    --color-bg: #161a14;
+    --color-surface: #1c2b1c;
+    --color-surface-raised: #253325;
+    --color-border: #2e3d2e;
+    --color-border-subtle: #243024;
+    --color-text: #e8e4da;
+    --color-text-secondary: #b0aa9e;
+    --color-text-muted: #706c62;
+    --color-accent: #e07a48;
+    --color-accent-hover: #f08a58;
+    --color-accent-light: #2a1e16;
+    --color-sage: #7a9e6c;
+    --color-sage-dark: #9dc48d;
+    --color-focus: #6fcf97;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --color-bg: #161a14;
+      --color-surface: #1c2b1c;
+      --color-surface-raised: #253325;
+      --color-border: #2e3d2e;
+      --color-border-subtle: #243024;
+      --color-text: #e8e4da;
+      --color-text-secondary: #b0aa9e;
+      --color-text-muted: #706c62;
+      --color-accent: #e07a48;
+      --color-accent-hover: #f08a58;
+      --color-accent-light: #2a1e16;
+      --color-sage: #7a9e6c;
+      --color-sage-dark: #9dc48d;
+      --color-focus: #6fcf97;
+    }
+  }
+}
+
+/* ─── Tailwind Theme Extension ──────────────────────────────────────────────── */
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-light: var(--color-accent-light);
+  --color-sage: var(--color-sage);
+  --color-sage-dark: var(--color-sage-dark);
+  --color-focus: var(--color-focus);
+}
+
+/* ─── Base Styles ────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-lora), Georgia, "Times New Roman", serif;
+    line-height: 1.75;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  ::selection {
+    background-color: var(--color-accent-light);
+    color: var(--color-text);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-lora), Georgia, serif;
+    line-height: 1.2;
+    color: var(--color-text);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration-line: underline;
+    text-underline-offset: 3px;
+    transition: color 150ms ease;
+  }
+  a:hover { color: var(--color-accent-hover); }
+
+  code, kbd, samp, pre {
+    font-family: var(--font-dm-mono), "Courier New", monospace;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 2rem 0;
+  }
+
+  img, video { max-width: 100%; height: auto; }
+}
+
+/* ─── Prose ──────────────────────────────────────────────────────────────────── */
+.prose {
+  max-width: 68ch;
+  color: var(--color-text);
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+.prose h2 {
+  font-size: 1.625rem; font-weight: 700;
+  margin-top: 2.5rem; margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+.prose h3 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
+.prose h4 { font-size: 1.0625rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.prose p { margin-bottom: 1.5rem; }
+.prose ul, .prose ol { padding-left: 1.75rem; margin-bottom: 1.5rem; }
+.prose li { margin-bottom: 0.375rem; }
+.prose blockquote {
+  border-left: 3px solid var(--color-accent);
+  padding: 0.75rem 1.25rem; margin: 1.75rem 0;
+  background-color: var(--color-accent-light);
+  border-radius: 0 6px 6px 0;
+  font-style: italic; color: var(--color-text-secondary);
+}
+.prose code:not(pre code) {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px; padding: 0.15em 0.4em;
+  font-size: 0.875em; color: var(--color-accent);
+}
+.prose pre { margin: 1.75rem 0; border-radius: 8px; overflow: hidden; }
+.prose a { color: var(--color-accent); font-weight: 500; }
+.prose img { border-radius: 8px; margin: 2rem auto; }
+.prose figure { margin: 2rem 0; }
+.prose figcaption {
+  text-align: center; font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-dm-mono), monospace; margin-top: 0.5rem;
+}
+.prose strong { font-weight: 700; color: var(--color-text); }
+
+/* ─── Skeleton ───────────────────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border-subtle) 50%, var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ─── Post card hover ────────────────────────────────────────────────────────── */
+.post-card-title-link {
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.post-card-title-link:hover {
+  color: var(--color-accent);
+}
