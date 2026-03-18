@@ -18,7 +18,7 @@ export function FeaturedPost({ post }: FeaturedPostProps) {
       {/* Background image */}
       <div className="relative h-72 sm:h-96 w-full">
         <Image
-          src={post.coverImage.src || "/images/posts/placeholder.jpg"}
+          src={post.coverImage.src || "/og-default.svg"}
           alt={post.coverImage.alt}
           fill
           sizes="(min-width: 1200px) 1152px, 100vw"

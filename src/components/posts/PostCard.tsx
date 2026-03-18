@@ -26,7 +26,7 @@ export function PostCard({ post, priority = false }: PostCardProps) {
       >
         <div className="relative aspect-video w-full bg-surface">
           <Image
-            src={post.coverImage.src || "/images/posts/placeholder.jpg"}
+            src={post.coverImage.src || "/og-default.svg"}
             alt={post.coverImage.alt}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"

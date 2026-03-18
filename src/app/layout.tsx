@@ -10,7 +10,7 @@ const lora = Lora({
   variable: "--font-lora",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
   style: ["normal", "italic"],
   preload: true,
 });
@@ -19,8 +19,8 @@ const dmMono = DM_Mono({
   variable: "--font-dm-mono",
   subsets: ["latin"],
   display: "swap",
-  weight: ["300", "400", "500"],
-  style: ["normal", "italic"],
+  weight: ["400"],
+  style: ["normal"],
   preload: false,
 });
 
@@ -73,8 +73,6 @@ export default function RootLayout({
       <head>
         <ThemeScript />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${lora.variable} ${dmMono.variable}`}>
         <ThemeProvider>
