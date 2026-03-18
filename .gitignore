@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+sanity/field-notes-blog/node_modules
 /.pnp
 .pnp.*
 .yarn/*
