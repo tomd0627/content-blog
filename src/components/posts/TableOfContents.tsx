@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface TocItem {
   id: string;
@@ -15,7 +15,6 @@ interface TableOfContentsProps {
 export function TableOfContents({ contentId = "post-content" }: TableOfContentsProps) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     const content = document.getElementById(contentId);
@@ -36,27 +35,33 @@ export function TableOfContents({ contentId = "post-content" }: TableOfContentsP
       return {
         id: h.id,
         text: h.textContent ?? "",
-        level: (parseInt(h.tagName[1] ?? "2") as 2 | 3),
+        level: (parseInt(h.tagName[1] ?? "2", 10) as 2 | 3),
       };
     });
 
     setItems(tocItems);
 
-    observerRef.current = new IntersectionObserver(
+    const intersecting = new Set<string>();
+
+    const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-            break;
+            intersecting.add(entry.target.id);
+          } else {
+            intersecting.delete(entry.target.id);
           }
         }
+        // Always highlight the topmost heading currently in the trigger zone
+        const topmost = headings.find((h) => intersecting.has(h.id));
+        if (topmost) setActiveId(topmost.id);
       },
-      { rootMargin: "-20% 0px -70% 0px", threshold: 0 }
+      { rootMargin: "0px 0px -80% 0px", threshold: 0 }
     );
 
-    headings.forEach((h) => observerRef.current?.observe(h));
+    for (const h of headings) observer.observe(h);
 
-    return () => observerRef.current?.disconnect();
+    return () => observer.disconnect();
   }, [contentId]);
 
   if (items.length < 2) return null;

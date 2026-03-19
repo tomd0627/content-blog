@@ -6,6 +6,7 @@ export function CopyButton({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    if (!navigator.clipboard) return;
     await navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -16,10 +17,9 @@ export function CopyButton({ code }: { code: string }) {
       type="button"
       onClick={handleCopy}
       aria-label={copied ? "Copied!" : "Copy code"}
-      className="absolute top-3 right-3 flex h-7 items-center gap-1.5 rounded px-2 text-xs font-medium transition-opacity hover:opacity-100 opacity-60"
+      className="flex h-7 items-center gap-1.5 rounded px-2 text-xs font-medium transition-opacity hover:opacity-100 opacity-50"
       style={{
-        backgroundColor: "rgba(255,255,255,0.1)",
-        color: copied ? "var(--color-sage)" : "rgba(255,255,255,0.8)",
+        color: copied ? "var(--color-sage)" : "var(--color-text-muted)",
         fontFamily: "var(--font-dm-mono), monospace",
       }}
     >

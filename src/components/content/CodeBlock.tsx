@@ -16,6 +16,7 @@ export async function CodeBlock({ code, language = "text", filename }: CodeBlock
         light: "github-light",
         dark: "github-dark",
       },
+      defaultColor: false,
     });
   } catch {
     // Fallback for unsupported languages
@@ -27,12 +28,12 @@ export async function CodeBlock({ code, language = "text", filename }: CodeBlock
 
   return (
     <div
-      className="relative group my-6 rounded-lg overflow-hidden border"
+      className="my-6 rounded-lg border"
       style={{ borderColor: "var(--color-border)" }}
     >
       {/* Header bar */}
       <div
-        className="flex items-center justify-between px-4 py-2 text-xs border-b"
+        className="flex items-center justify-between px-4 py-2 text-xs border-b rounded-t-lg"
         style={{
           backgroundColor: "var(--color-surface)",
           borderColor: "var(--color-border)",
@@ -41,19 +42,15 @@ export async function CodeBlock({ code, language = "text", filename }: CodeBlock
         }}
       >
         <span>{filename ?? language}</span>
+        <CopyButton code={code} />
       </div>
 
       {/* Code */}
-      <div className="relative">
-        <div
-          className="overflow-x-auto text-sm"
-          // Shiki generates light/dark themes via CSS vars — we wire them to our theme
-          style={{ "--shiki-light-bg": "var(--color-surface)", "--shiki-dark-bg": "#1c2b1c" } as React.CSSProperties}
-          // biome-ignore lint: safe — Shiki output is server-generated, no user input
-          dangerouslySetInnerHTML={{ __html: highlighted }}
-        />
-        <CopyButton code={code} />
-      </div>
+      <div
+        className="text-sm"
+        // biome-ignore lint: safe — Shiki output is server-generated, no user input
+        dangerouslySetInnerHTML={{ __html: highlighted }}
+      />
     </div>
   );
 }

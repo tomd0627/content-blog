@@ -141,6 +141,11 @@
   img, video { max-width: 100%; height: auto; }
 }
 
+/* Outside @layer so it wins over any layered reset */
+h1, h2, h3, h4, h5, h6 {
+  scroll-margin-top: 5rem; /* 4rem sticky header + 1rem breathing room */
+}
+
 /* ─── Prose ──────────────────────────────────────────────────────────────────── */
 .prose {
   max-width: 68ch;
@@ -182,6 +187,32 @@
   font-family: var(--font-dm-mono), monospace; margin-top: 0.5rem;
 }
 .prose strong { font-weight: 700; color: var(--color-text); }
+
+/* ─── Shiki code blocks ──────────────────────────────────────────────────────── */
+/* defaultColor:false means Shiki only emits --shiki-light/dark CSS vars, no inline styles */
+.shiki {
+  background-color: transparent;
+  color: var(--shiki-light);
+  padding: 0.75rem 1rem;
+}
+.shiki span {
+  color: var(--shiki-light);
+}
+.shiki code {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+[data-theme="dark"] .shiki,
+[data-theme="dark"] .shiki span {
+  color: var(--shiki-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shiki,
+  :root:not([data-theme="light"]) .shiki span {
+    color: var(--shiki-dark);
+  }
+}
 
 /* ─── Skeleton ───────────────────────────────────────────────────────────────── */
 @keyframes skeleton-shimmer {
