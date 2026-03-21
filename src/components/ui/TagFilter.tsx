@@ -32,7 +32,7 @@ export function TagFilter({ tags, activeTag }: TagFilterProps) {
           <button
             type="button"
             onClick={() => setTag(null)}
-            className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors"
+            className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer"
             style={
               !activeTag
                 ? {
@@ -58,7 +58,7 @@ export function TagFilter({ tags, activeTag }: TagFilterProps) {
               <button
                 type="button"
                 onClick={() => setTag(tag.slug)}
-                className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors"
+                className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer"
                 style={
                   isActive
                     ? {

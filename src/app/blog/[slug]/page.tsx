@@ -157,16 +157,9 @@ export default async function PostPage({ params }: PostPageProps) {
       </article>
 
       {/* Related posts */}
-      <div
-        className="border-t mt-16 pt-12"
-        style={{ borderColor: "var(--color-border)" }}
-      >
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-16">
-          <Suspense fallback={null}>
-            <RelatedPosts tags={post.tags} excludeSlug={post.slug} />
-          </Suspense>
-        </div>
-      </div>
+      <Suspense fallback={null}>
+        <RelatedPosts tags={post.tags} excludeSlug={post.slug} />
+      </Suspense>
 
       <BackToTop />
     </>

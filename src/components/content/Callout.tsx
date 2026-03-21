@@ -1,3 +1,5 @@
+import { Info, AlertTriangle, Lightbulb } from "lucide-react";
+
 type CalloutType = "info" | "warning" | "tip";
 
 interface CalloutProps {
@@ -5,10 +7,10 @@ interface CalloutProps {
   children: React.ReactNode;
 }
 
-const icons: Record<CalloutType, string> = {
-  info: "ℹ",
-  warning: "⚠",
-  tip: "💡",
+const icons: Record<CalloutType, React.ReactElement> = {
+  info: <Info size={16} aria-hidden />,
+  warning: <AlertTriangle size={16} aria-hidden />,
+  tip: <Lightbulb size={16} aria-hidden />,
 };
 
 const styles: Record<CalloutType, React.CSSProperties> = {
@@ -36,7 +38,7 @@ export function Callout({ type, children }: CalloutProps) {
       style={styles[type]}
       role="note"
     >
-      <span aria-hidden="true" className="text-base shrink-0 mt-0.5">
+      <span aria-hidden="true" className="shrink-0 mt-0.5">
         {icons[type]}
       </span>
       <div>{children}</div>
