@@ -15,8 +15,9 @@ const components = {
     image: ({
       value,
     }: {
-      value: { asset: { _ref: string }; alt?: string; caption?: string };
+      value: { asset?: { _ref: string }; alt?: string; caption?: string };
     }) => {
+      if (!value.asset?._ref) return null;
       const url = urlForImage(value).width(800).url();
       return (
         <figure className="my-8">
