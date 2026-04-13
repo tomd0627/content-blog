@@ -24,6 +24,7 @@ sanity/field-notes-blog/node_modules
 # misc
 .DS_Store
 *.pem
+.claude/
 
 # debug
 npm-debug.log*
