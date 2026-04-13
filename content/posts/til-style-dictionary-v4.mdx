@@ -1,0 +1,56 @@
+---
+title: "TIL: Style Dictionary v4 switched to the W3C Design Token spec format"
+slug: "til-style-dictionary-v4"
+excerpt: "The W3C Community Group published a Design Token spec that standardizes how tokens are expressed in JSON. Style Dictionary v4 adopted it — and it's a breaking change from v3."
+publishedAt: "2026-04-04T09:00:00Z"
+tags: ["til", "design-systems", "css"]
+featured: false
+---
+
+When I built the [Design Token Pipeline](https://tomdeluca-pipeline.netlify.app), I chose Style Dictionary v4 specifically because it adopted the W3C Design Token Community Group (DTCG) format. If you're coming from v3, the token file structure looks different enough to be confusing.
+
+## The v3 format (old)
+
+```json
+{
+  "color": {
+    "primary": {
+      "value": "#1a6cf6",
+      "type": "color"
+    }
+  }
+}
+```
+
+## The v4 / W3C DTCG format (new)
+
+```json
+{
+  "color": {
+    "primary": {
+      "$value": "#1a6cf6",
+      "$type": "color",
+      "$description": "Primary brand color used for CTAs and links"
+    }
+  }
+}
+```
+
+The key change: `value` becomes `$value`, `type` becomes `$type`, and `description` becomes `$description`. The `$` prefix distinguishes token properties from token group names, which resolves an ambiguity in the old spec where a group could accidentally shadow a reserved key.
+
+## Why the W3C spec matters
+
+The point of the DTCG format is interoperability. A token file in this format should be readable by any conforming tool — Style Dictionary, Theo, Tokens Studio, future Figma exports, whatever comes next. It's the first serious attempt at a lingua franca for design tokens across tools.
+
+## Migrating from v3 to v4
+
+Style Dictionary provides a `convertToDTCG` utility that does the mechanical conversion. But you'll also need to update any custom transforms and formats that read `token.value` directly — they need to become `token.$value`.
+
+```js
+// In a custom transform
+transform: {
+  transformer: (token) => token.$value.toUpperCase(), // not token.value
+}
+```
+
+The migration is worth it. Tooling interoperability is the whole point of maintaining a token pipeline.

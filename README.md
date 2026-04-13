@@ -37,9 +37,20 @@ cp .env.example .env.local
 
 ## Content
 
-Without Sanity, the app reads from `content/posts/` (MDX files with gray-matter frontmatter). Six seed posts are included.
+Without Sanity, the app reads from `content/posts/` (MDX files with gray-matter frontmatter). Fourteen seed posts are included covering accessibility, performance, CSS, animation, and TypeScript.
 
 With Sanity configured, content is fetched from the CMS and the local MDX files are ignored.
+
+## Sanity Studio
+
+The Studio lives in `sanity/field-notes-blog/`. To run it locally (connects to the same dataset as production):
+
+```bash
+cd sanity/field-notes-blog
+npm run dev
+```
+
+Open [http://localhost:3333](http://localhost:3333). Any posts published here appear on the site after the next Netlify deploy (or immediately if ISR has warmed the route).
 
 ## Scripts
 

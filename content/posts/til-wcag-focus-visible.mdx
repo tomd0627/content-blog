@@ -1,0 +1,48 @@
+---
+title: "TIL: outline: none without :focus-visible is a WCAG 2.4.7 failure"
+slug: "til-wcag-focus-visible"
+excerpt: "Removing the browser focus ring without replacing it is one of the most common accessibility violations on production sites. Here's the right pattern."
+publishedAt: "2026-04-06T09:00:00Z"
+tags: ["til", "accessibility", "css", "wcag"]
+featured: false
+---
+
+One of the demos I built for the [Accessibility Demo](https://tomdeluca-ally.netlify.app) covers focus indicators — and it's the one I've seen violated more than any other on production sites I've worked on.
+
+## The violation
+
+```css
+/* ❌ Fails WCAG 2.4.7 — Focus Visible (Level AA) */
+*:focus {
+  outline: none;
+}
+```
+
+This is usually added to remove the blue browser outline that "looks ugly" on click. The intent is cosmetic. The effect is that keyboard users lose all ability to tell where focus is on the page. For people who cannot use a mouse — including users with motor impairments and power users who prefer keyboard navigation — this is a blocker.
+
+## The right pattern: :focus-visible
+
+`:focus-visible` is a CSS pseudo-class that applies only when the browser determines the focus indicator is necessary. Click a button? No ring. Tab to a button? Ring appears. It gives you the cosmetic control without breaking keyboard navigation.
+
+```css
+/* ✅ Correct pattern */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+```
+
+## Browser support
+
+`:focus-visible` has been in all major browsers since late 2022 and is safe to use without a polyfill. If you're still supporting IE11... I'm sorry, and also: `outline: none` is the least of your problems.
+
+## The WCAG criterion
+
+This maps to **SC 2.4.7 Focus Visible (Level AA)**: any keyboard operable UI must have a mode where the keyboard focus indicator is visible. Removing the ring without replacing it is a direct failure.
+
+The right fix is always to design a focus style that matches your brand, not to hide it.

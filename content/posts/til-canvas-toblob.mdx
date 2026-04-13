@@ -1,0 +1,47 @@
+---
+title: "TIL: canvas.toBlob() is the right API for exporting Canvas content"
+slug: "til-canvas-toblob"
+excerpt: "toDataURL() blocks the main thread. toBlob() is async, integrates with the File API, and produces a proper binary Blob — use it for anything the user will download or share."
+publishedAt: "2026-04-05T09:00:00Z"
+tags: ["til", "canvas", "frontend"]
+featured: false
+---
+
+While building the 'Share your result' feature for [Chromatic](https://tomdeluca-chromatic.netlify.app), I needed to export a side-by-side canvas composite as a downloadable image. I reached for `toDataURL()` first. I shouldn't have.
+
+## The problem with toDataURL()
+
+`toDataURL()` is synchronous. For a small canvas it's fine. For a large canvas — say, a composite of two screenshots at full viewport size — it blocks the main thread while it encodes the PNG. On slower devices, that's a noticeable freeze.
+
+```js
+// ❌ Synchronous — blocks the main thread
+const dataUrl = canvas.toDataURL("image/png");
+const link = document.createElement("a");
+link.href = dataUrl;
+link.download = "result.png";
+link.click();
+```
+
+It also produces a base64 string that has to be parsed back into binary if you ever want to send it to a server or use the File API.
+
+## toBlob() is async and produces a real Blob
+
+```js
+// ✅ Async — doesn't block
+canvas.toBlob((blob) => {
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "result.png";
+  link.click();
+  // Clean up the object URL after the download starts
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}, "image/png");
+```
+
+The callback receives a native `Blob` — which slots directly into `FormData`, `File`, the Share API (`navigator.share({ files: [new File([blob], "result.png")] })`), or any fetch upload. No base64 conversion step needed.
+
+## The quality argument
+
+Both methods accept a quality parameter for lossy formats. `toBlob("image/webp", 0.9)` produces a smaller file than PNG with barely perceptible quality loss — a worthwhile trade for a social share feature where file size matters.

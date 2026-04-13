@@ -1,0 +1,45 @@
+---
+title: "TIL: Storybook's --output-dir flag produces a fully static, hostable build"
+slug: "til-storybook-static-build"
+excerpt: "You don't need to run a dev server to share a Storybook. One build command produces a static HTML/JS bundle you can deploy to any host — Netlify, GitHub Pages, S3."
+publishedAt: "2026-04-03T09:00:00Z"
+tags: ["til", "storybook", "frontend", "dx"]
+featured: false
+---
+
+When I built the [Component Playground](https://tomdeluca-components.netlify.app), I initially assumed that sharing a Storybook meant sharing a running dev server or a repo link. Neither is a great experience for a recruiter or a design partner. Then I found the `storybook build` command.
+
+## The command
+
+```bash
+npx storybook build --output-dir storybook-static
+```
+
+That's it. Storybook crawls all your story files, renders every story, and outputs a fully static HTML/JS/CSS bundle to the specified directory. No server required. No Node.js required to view it. Just open `index.html`.
+
+## Deploying to Netlify
+
+Drop the output directory into your Netlify site's publish path and you're done:
+
+```toml
+# netlify.toml
+[build]
+  command = "npx storybook build --output-dir storybook-static"
+  publish = "storybook-static"
+```
+
+Every push to main automatically rebuilds and deploys a fresh, browsable component library. Design and engineering get a shared reference URL they can bookmark, link in Jira tickets, or use in design reviews.
+
+## What the static build includes
+
+- Full Storybook UI (sidebar, toolbar, addons panel)
+- All stories, rendered and navigable
+- Docs pages if you use `@storybook/addon-docs`
+- Controls addon — visitors can still interact with component props
+- Actions addon — click logs still work in the browser
+
+The only thing that doesn't work in a static build is anything requiring a live server (like mock API endpoints that your stories might call). For a portfolio or design system documentation site, this is rarely a limitation.
+
+## The thing it unlocked
+
+A static Storybook is the difference between "here's a link to my GitHub" and "here's a link to the live, browsable component library." For every design system conversation I've had since, I've led with the hosted URL.

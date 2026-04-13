@@ -1,0 +1,116 @@
+---
+title: "Why I Prefer Design Tokens Over Hardcoded CSS Variables"
+slug: "design-tokens-vs-css-variables"
+excerpt: "CSS custom properties are powerful, but they're a delivery mechanism, not a system. Design tokens give you a source of truth that generates CSS, JS, and TypeScript from a single spec-compliant file."
+publishedAt: "2026-03-05T09:00:00Z"
+tags: ["css", "design-systems", "frontend"]
+featured: false
+---
+
+A common pattern in modern front-end codebases: a `variables.css` file that starts clean and grows into something no one fully understands.
+
+```css
+:root {
+  --color-primary: #1a6cf6;
+  --color-primary-hover: #1558cc;
+  --color-primary-active: #1044a8;
+  --color-primary-disabled: #a8c3fb;
+  /* 200 more lines... */
+}
+```
+
+This works. It absolutely works. But it has a ceiling. The values live in CSS, which means any consumer that isn't CSS — JavaScript, TypeScript, native mobile, email templates — either has to duplicate the values or find another way to read them. There's also no schema, no type safety, no way to enforce the naming convention, and no way to know if a token is actually used anywhere.
+
+Design tokens address all of this. Here's why I use them, and how.
+
+## What a design token actually is
+
+A design token is a name-value pair stored in a format-agnostic source file. The W3C Design Token Community Group has been working to standardize that format, and [Style Dictionary v4](https://studiofreight.github.io/style-dictionary/) adopted it:
+
+```json
+{
+  "color": {
+    "brand": {
+      "primary": {
+        "$value": "#1a6cf6",
+        "$type": "color",
+        "$description": "Primary brand color. Used for CTAs, links, and active states."
+      }
+    }
+  }
+}
+```
+
+That single JSON file is the source of truth. Style Dictionary reads it and generates whatever outputs you configure.
+
+## What the pipeline produces
+
+For the [Design Token Pipeline](https://tomdeluca-pipeline.netlify.app), I configured three outputs from one token source:
+
+**CSS custom properties** — for use in stylesheets:
+
+```css
+:root {
+  --color-brand-primary: #1a6cf6;
+}
+```
+
+**JavaScript ESM exports** — for use in component libraries, Storybook, or anywhere JS runs:
+
+```js
+export const colorBrandPrimary = "#1a6cf6";
+```
+
+**TypeScript exports** — same as JS, but with type declarations for autocomplete:
+
+```ts
+export const colorBrandPrimary: string = "#1a6cf6";
+```
+
+One change to the source token propagates to all three. No manual sync. No drift.
+
+## The argument for CSS variables alone
+
+I want to be fair to the counterargument: CSS custom properties have genuine advantages that design tokens don't replicate at build time.
+
+CSS variables are **runtime**. You can change them with JavaScript, scope them to a component, override them in a media query, or swap a whole theme by toggling a class on `<html>`. Design tokens produce static output — the values are baked at build time.
+
+```css
+/* This is genuinely powerful and can't be replicated by build-time tokens */
+[data-theme="dark"] {
+  --color-brand-primary: #6ea8fe;
+}
+```
+
+The answer isn't to choose one over the other — it's to use design tokens as the *source* that generates CSS variables. Your token file holds the canonical values; your CSS variables expose them at runtime.
+
+```css
+/* Generated output — don't edit this directly */
+:root {
+  --color-brand-primary: #1a6cf6;
+}
+
+[data-theme="dark"] {
+  --color-brand-primary: #6ea8fe;
+}
+```
+
+## Where the token approach earns its complexity
+
+The overhead of a token pipeline isn't free. You're adding a build step, a configuration file, and a new mental model for anyone who wants to change a color. That cost is worth it when:
+
+1. **Multiple platforms consume the same tokens.** If web, iOS, Android, and email all need the same brand colors, a shared token source is the only maintainable approach.
+
+2. **The design tool is Figma with Tokens Studio.** Tokens Studio can sync directly to a DTCG-format token file. Design changes in Figma propagate to code through a PR — no manual transcription, no drift.
+
+3. **The team is large enough that enforcement matters.** A naming convention in a comment is a suggestion. A naming convention enforced by a schema and a linter is a constraint. Tokens make it impossible to ship `--color-blue-ish` instead of `--color-brand-primary`.
+
+## Where it's probably overkill
+
+A personal project with one developer, one platform, and a color palette that fits on one screen doesn't need a token pipeline. CSS variables and discipline are fine. The pipeline earns its complexity at scale — not before.
+
+That's the honest version. The tooling exists to solve real problems. Use it when you have those problems.
+
+---
+
+If you want to see the pipeline running live — including the JSON-to-CSS/JS/TS transform in the browser — the [Design Token Pipeline project](https://tomdeluca-pipeline.netlify.app) has an interactive editor that shows the generated output as you modify token values.
