@@ -51,7 +51,7 @@ export function FeaturedPost({ post }: FeaturedPostProps) {
         </span>
 
         <div className="mb-4">
-          <PostMeta post={post} staticTags />
+          <PostMeta post={post} onDark />
         </div>
 
         <h2

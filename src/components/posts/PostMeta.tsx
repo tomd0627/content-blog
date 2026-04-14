@@ -5,20 +5,24 @@ import type { PostSummary } from "@/types";
 interface PostMetaProps {
   post: Pick<PostSummary, "publishedAt" | "readingTime" | "tags">;
   staticTags?: boolean;
+  onDark?: boolean;
 }
 
-export function PostMeta({ post, staticTags = false }: PostMetaProps) {
+export function PostMeta({ post, staticTags = false, onDark = false }: PostMetaProps) {
+  const metaColor = onDark ? "rgba(255,255,255,0.80)" : "var(--color-text-secondary)";
+  const dotColor = onDark ? "rgba(255,255,255,0.50)" : "var(--color-border)";
+
   return (
     <div className="flex flex-col gap-1.5">
       <div
         className="flex items-center gap-x-2 text-sm"
         style={{ fontFamily: "var(--font-dm-mono), monospace" }}
       >
-        <time dateTime={post.publishedAt} style={{ color: "var(--color-text-secondary)" }}>
+        <time dateTime={post.publishedAt} style={{ color: metaColor }}>
           {formatDate(post.publishedAt)}
         </time>
-        <span aria-hidden="true" style={{ color: "var(--color-border)" }}>·</span>
-        <span style={{ color: "var(--color-text-muted)" }}>{post.readingTime}</span>
+        <span aria-hidden="true" style={{ color: dotColor }}>·</span>
+        <span style={{ color: metaColor }}>{post.readingTime}</span>
       </div>
       {post.tags.length > 0 && (
         <ul className="flex flex-wrap gap-1.5 list-none p-0 m-0" aria-label="Tags">
