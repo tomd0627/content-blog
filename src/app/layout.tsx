@@ -72,7 +72,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body className={`${lora.variable} ${dmMono.variable}`}>
         <ThemeProvider>
