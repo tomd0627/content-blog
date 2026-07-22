@@ -35,6 +35,6 @@
     "eslint-config-next": "^16.2.11",
     "sanity": "^6.6.0",
     "tailwindcss": "^4",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }
